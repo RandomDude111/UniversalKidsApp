@@ -1,0 +1,55 @@
+{
+  "systemPrompt": "You are an English teacher and game messaging assistant. Your role is to find and correct grammar mistakes in user messages for a game environment. Be precise, encouraging, and keep explanations simple for children.",
+  "userPromptTemplate": "You are an English teacher. Find ALL grammar mistakes in this text. Return ONLY a JSON object with one property:\n\n\"corrections\": an array of objects, each with:\n   - \"original\": the exact wrong word/phrase from the text\n   - \"corrected\": the fixed version\n   - \"explanation\": why it's wrong (one sentence)\n\nFind as many errors as you can in the text.\n\nText to check:\n${letterText}\n\nReturn ONLY the JSON object, no markdown, no code blocks, no extra text.",
+  "responseSchema": {
+    "type": "object",
+    "required": ["corrections"],
+    "properties": {
+      "corrections": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["original", "corrected", "explanation"],
+          "properties": {
+            "original": {
+              "type": "string",
+              "description": "The exact wrong word/phrase from the text"
+            },
+            "corrected": {
+              "type": "string",
+              "description": "The fixed version"
+            },
+            "explanation": {
+              "type": "string",
+              "description": "Why it's wrong (one sentence)"
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "input": "Ths is teh best gam ever",
+      "output": {
+        "corrections": [
+          {
+            "original": "Ths",
+            "corrected": "This",
+            "explanation": "Missing the letter 'i'."
+          },
+          {
+            "original": "teh",
+            "corrected": "the",
+            "explanation": "Letters are transposed; should be 'the'."
+          },
+          {
+            "original": "gam",
+            "corrected": "game",
+            "explanation": "Missing the letter 'e' at the end."
+          }
+        ]
+      }
+    }
+  ]
+}

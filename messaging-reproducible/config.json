@@ -1,0 +1,29 @@
+{
+  "ai": {
+    "provider": "Groq",
+    "apiEndpoint": "https://api.groq.com/openai/v1/chat/completions",
+    "model": "llama-3.3-70b-versatile",
+    "apiKeyEnvVar": "GROQ_API_KEY",
+    "temperature": 0.7,
+    "maxTokens": 1024
+  },
+  "messaging": {
+    "backendEndpoint": "https://your-game.example/api/messages",
+    "backendAuthHeader": "Authorization: Bearer <SERVICE_TOKEN>",
+    "contentType": "application/json"
+  },
+  "messageDefaults": {
+    "audience": "child",
+    "locale": "en-US",
+    "style": "friendly",
+    "maxLength": 200,
+    "safetyProfile": "strict"
+  },
+  "preserveTokens": [
+    "@HINT@",
+    "@ACTION@",
+    "@SYSTEM@",
+    "<GAME_COMMAND>",
+    "<REWARD>"
+  ]
+}

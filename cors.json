@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:*", "https://universal-kids-app.firebaseapp.com", "https://adodnrivrineson17.web.app"],
+    "method": ["GET", "HEAD", "DELETE", "PUT", "POST", "OPTIONS"],
+    "responseHeader": ["Content-Type", "x-goog-meta-*"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Universal Kids App Server
+Comment=Start the development server for Universal Kids App
+Exec=bash -i -c 'cd "/home/popos/Desktop/games/android version" && bash run-dev.sh'
+Icon=utilities-terminal
+Terminal=true
+Categories=Development;
