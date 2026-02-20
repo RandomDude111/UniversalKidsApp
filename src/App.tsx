@@ -6,7 +6,7 @@ import { LockScreen } from './components/LockScreen';
 import { NotificationPanel } from './components/NotificationPanel';
 import { HomeScreen } from './components/HomeScreen';
 import { AppLauncher } from './components/AppLauncher';
-import { App as AppType } from './data/apps';
+import { App as AppType, APPS } from './data/apps';
 import { ArrowLeft } from 'lucide-react';
 
 interface UserData {
@@ -110,6 +110,27 @@ function App() {
       }
     };
   }, []);
+
+  // Listen for forced app changes and auto-open them
+  useEffect(() => {
+    if (!user) return;
+
+    const forcedAppRef = doc(db, 'adminSettings', 'forcedApp');
+    const unsubscribe = onSnapshot(forcedAppRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.appId && data.appName) {
+          // Find the app from APPS and open it
+          const app = APPS.find((a: AppType) => a.id === data.appId);
+          if (app) {
+            setCurrentApp(app);
+          }
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [user]);
 
   const markMessagesAsRead = async (senderId: string) => {
     try {
@@ -216,7 +237,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <HomeScreen onOpenApp={setCurrentApp} />
+          <HomeScreen onOpenApp={setCurrentApp} currentUser={userData || undefined} />
         )}
       </div>
 

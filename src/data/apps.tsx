@@ -8,6 +8,7 @@ export interface App {
   icon: React.ReactNode;
   color: string;
   comingSoon?: boolean;
+  role?: 'student' | 'teacher';
 }
 
 export const APPS: App[] = [
@@ -81,13 +82,20 @@ export const APPS: App[] = [
     id: 'teacher',
     name: 'Teacher',
     icon: <User size={32} />,
-    color: 'bg-gray-700'
+    color: 'bg-gray-700',
+    role: 'teacher'
   },
   {
     id: 'handgrabber',
     name: 'Hand Grabber',
     icon: <Hand size={32} />,
     color: 'bg-yellow-600'
+  },
+  {
+    id: 'voting',
+    name: 'Voting',
+    icon: <Radio size={32} />,
+    color: 'bg-cyan-500'
   },
   {
     id: 'minecraft',
@@ -100,6 +108,70 @@ export const APPS: App[] = [
     name: 'Homework',
     icon: <BookOpen size={32} />,
     color: 'bg-indigo-600'
+  },
+  // Teacher-only apps
+  {
+    id: 'teacher-live',
+    name: 'Teacher Live',
+    icon: <Radio size={32} />,
+    color: 'bg-orange-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-students',
+    name: 'Manage Students',
+    icon: <Users size={32} />,
+    color: 'bg-teal-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-funds',
+    name: 'Teacher Funds',
+    icon: <DollarSign size={32} />,
+    color: 'bg-purple-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-classes',
+    name: 'Manage Classes',
+    icon: <BookOpen size={32} />,
+    color: 'bg-green-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-scheduling',
+    name: 'Scheduling',
+    icon: <Calendar size={32} />,
+    color: 'bg-yellow-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-games',
+    name: 'Joint Games',
+    icon: <Gamepad2 size={32} />,
+    color: 'bg-pink-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-homework',
+    name: 'Teacher Homework',
+    icon: <BookOpen size={32} />,
+    color: 'bg-indigo-700',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-forceapp',
+    name: 'Force App',
+    icon: <Radio size={32} />,
+    color: 'bg-cyan-500',
+    role: 'teacher'
+  },
+  {
+    id: 'teacher-voting',
+    name: 'Teacher Voting',
+    icon: <Radio size={32} />,
+    color: 'bg-cyan-700',
+    role: 'teacher'
   },
   // Coming Soon
   {

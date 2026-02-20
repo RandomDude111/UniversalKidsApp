@@ -13,6 +13,8 @@ import MinecraftGame from './Minecraft/MinecraftGame';
 import { StudentHomework } from './Homework/StudentHomework';
 import { TeacherHomework } from './Homework/TeacherHomework';
 import { APPS } from '../data/apps';
+import Voting from './Voting';
+import BulkAddStudents from './BulkAddStudents';
 
 interface AppLauncherProps {
   app: App;
@@ -786,10 +788,8 @@ interface ScheduleItem {
   time: string;
 }
 
-const TeacherApp = ({ currentUser }: { currentUser: any }) => {
-  const [entered, setEntered] = useState('');
-  const [unlocked, setUnlocked] = useState(false);
-  const [tab, setTab] = useState<'live' | 'students' | 'funds' | 'classes' | 'scheduling' | 'jointgames' | 'homework' | null>(null);
+const TeacherApp = ({ currentUser, defaultTab }: { currentUser: any; defaultTab?: 'live' | 'students' | 'funds' | 'classes' | 'scheduling' | 'jointgames' | 'homework' | 'forceapp' }) => {
+  const [tab, setTab] = useState<'live' | 'students' | 'funds' | 'classes' | 'scheduling' | 'jointgames' | 'homework' | 'forceapp' | null>(defaultTab || null);
 
   const [liveType, setLiveType] = useState<'link'|'pdf'|'video'|'game'|'screen'>('link');
   const [payload, setPayload] = useState('');
@@ -881,6 +881,63 @@ const TeacherApp = ({ currentUser }: { currentUser: any }) => {
     }
   };
 
+  // Force app state
+  const [forcedApp, setForcedApp] = useState<{ id: string; name: string } | null>(null);
+  const [loadingForcedApp, setLoadingForcedApp] = useState(false);
+
+  // Listen for forced app changes
+  useEffect(() => {
+    const forcedAppRef = doc(db, 'adminSettings', 'forcedApp');
+    const unsubscribe = onSnapshot(forcedAppRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.appId && data.appName) {
+          setForcedApp({ id: data.appId, name: data.appName });
+        } else {
+          setForcedApp(null);
+        }
+      } else {
+        setForcedApp(null);
+      }
+    }, (error) => {
+      console.error('Error listening to forced app:', error);
+    });
+    return unsubscribe;
+  }, []);
+
+  const forceOpenApp = async (appId: string, appName: string) => {
+    try {
+      setLoadingForcedApp(true);
+      const forcedAppRef = doc(db, 'adminSettings', 'forcedApp');
+      await setDoc(forcedAppRef, {
+        appId,
+        appName,
+        forcedAt: serverTimestamp(),
+        forcedBy: currentUser?.uid || 'teacher'
+      });
+      alert(`Forcing all users to open: ${appName}`);
+    } catch (error) {
+      console.error('Error forcing app:', error);
+      alert('Failed to force app');
+    } finally {
+      setLoadingForcedApp(false);
+    }
+  };
+
+  const clearForcedApp = async () => {
+    try {
+      setLoadingForcedApp(true);
+      const forcedAppRef = doc(db, 'adminSettings', 'forcedApp');
+      await setDoc(forcedAppRef, { appId: '', appName: '' });
+      alert('Forced app cleared');
+    } catch (error) {
+      console.error('Error clearing forced app:', error);
+      alert('Failed to clear forced app');
+    } finally {
+      setLoadingForcedApp(false);
+    }
+  };
+
   // Handle class form operations
   const resetClassForm = () => {
     setFormData({ name: '', days: [], teacher: '', course: '' });
@@ -945,10 +1002,6 @@ const TeacherApp = ({ currentUser }: { currentUser: any }) => {
       days: prev.days.includes(day) ? prev.days.filter(d => d !== day) : [...prev.days, day]
     }));
   };
-
-  const addDigit = (d: string) => { if (entered.length < 4) setEntered(entered + d); };
-  const clear = () => setEntered('');
-  const submitCode = () => { if (entered === TEACHER_CODE) { setUnlocked(true); setEntered(''); } else { alert('Invalid'); setEntered(''); } };
 
   const publishLive = async () => {
     try {
@@ -1066,28 +1119,6 @@ const TeacherApp = ({ currentUser }: { currentUser: any }) => {
     }
   };
 
-  if (!unlocked) {
-    return (
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-white mb-4">Teacher Login</h2>
-        <div className="bg-gray-900 p-3 rounded text-center text-white text-2xl tracking-widest mb-4 h-12 flex items-center justify-center">
-          {entered.split('').map((_,i) => <span key={i}>●</span>)}{entered.length===0 && <span className="text-gray-600">----</span>}
-        </div>
-        <div className="flex justify-center mb-3">
-          <div className="grid grid-cols-3 gap-2 w-fit">
-            {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => addDigit(String(n))} className="w-16 py-3 bg-blue-600 text-white rounded">{n}</button>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-2 justify-center max-w-xs mx-auto">
-          <button onClick={clear} className="flex-1 py-2 bg-gray-600 text-white rounded">Clear</button>
-          <button onClick={submitCode} disabled={entered.length!==4} className="flex-1 py-2 bg-green-600 text-white rounded">Unlock</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold text-white mb-4">Teacher Console</h2>
@@ -1099,7 +1130,7 @@ const TeacherApp = ({ currentUser }: { currentUser: any }) => {
         <button onClick={() => setTab('scheduling')} className={`px-4 py-2 rounded ${tab === 'scheduling' ? 'bg-blue-600' : 'bg-indigo-600'} text-white`}>Scheduling</button>
         <button onClick={() => setTab('jointgames')} className={`px-4 py-2 rounded ${tab === 'jointgames' ? 'bg-blue-600' : 'bg-pink-600'} text-white`}>Joint Games</button>
         <button onClick={() => setTab('homework')} className={`px-4 py-2 rounded ${tab === 'homework' ? 'bg-blue-600' : 'bg-indigo-600'} text-white`}>Homework</button>
-        <button onClick={() => { setUnlocked(false); setTab(null); }} className="ml-auto px-4 py-2 bg-red-600 text-white rounded">Lock</button>
+        <button onClick={() => setTab('forceapp')} className={`px-4 py-2 rounded ${tab === 'forceapp' ? 'bg-blue-600' : 'bg-cyan-600'} text-white`}>📺 Force App</button>
       </div>
 
       {tab === 'live' && (
@@ -1176,13 +1207,53 @@ const TeacherApp = ({ currentUser }: { currentUser: any }) => {
 
       {tab === 'students' && (
         <div className="mt-4">
-          <UsersList onSelectUser={() => {}} />
+          <BulkAddStudents currentUser={currentUser} />
         </div>
       )}
 
       {tab === 'funds' && (
         <div className="mt-4">
           <BankApp currentUser={currentUser} />
+        </div>
+      )}
+
+      {tab === 'forceapp' && (
+        <div className="mt-4 bg-gray-800 p-4 rounded">
+          <h3 className="text-xl font-semibold text-white mb-4">📺 Force Open App</h3>
+          <p className="text-gray-300 mb-4">Select an app to force all logged-in users to open it:</p>
+          
+          {forcedApp && (
+            <div className="mb-4 p-3 bg-yellow-900 border border-yellow-600 rounded">
+              <p className="text-yellow-300">Currently forced: <span className="font-bold">{forcedApp.name}</span></p>
+              <button 
+                onClick={clearForcedApp}
+                disabled={loadingForcedApp}
+                className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded"
+              >
+                {loadingForcedApp ? 'Clearing...' : 'Clear Forced App'}
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            {APPS
+              .filter(app => app.role !== 'teacher' && !app.comingSoon)
+              .map(app => (
+                <button
+                  key={app.id}
+                  onClick={() => forceOpenApp(app.id, app.name)}
+                  disabled={loadingForcedApp || (forcedApp?.id === app.id)}
+                  className={`p-4 rounded border-2 transition-colors ${
+                    forcedApp?.id === app.id
+                      ? 'border-green-500 bg-green-900 text-green-300'
+                      : 'border-gray-600 bg-gray-900 hover:border-cyan-500 hover:bg-gray-800 text-white'
+                  } disabled:opacity-50`}
+                >
+                  <div className="text-sm font-semibold">{app.name}</div>
+                  {forcedApp?.id === app.id && <div className="text-xs mt-1">✓ Active</div>}
+                </button>
+              ))}
+          </div>
         </div>
       )}
 
@@ -2109,12 +2180,39 @@ export const AppLauncher = ({ app, onClose, preSelectedSender, onOpenApp }: AppL
       return <HangmanStudentApp currentUser={currentUser} />;
     case 'homework':
       return currentUser ? (
-        <StudentHomework currentUser={currentUser} />
+        <StudentHomework currentUser={currentUser} onClose={onClose} />
       ) : (
         <div className="p-6 text-center">
           <div className="text-lg text-gray-400">Please log in to access homework</div>
         </div>
       );
+    // Teacher-only apps - route to TeacherApp with specific tabs
+    case 'teacher-live':
+      return <TeacherApp currentUser={currentUser} defaultTab="live" />;
+    case 'teacher-students':
+      return <TeacherApp currentUser={currentUser} defaultTab="students" />;
+    case 'teacher-funds':
+      return <TeacherApp currentUser={currentUser} defaultTab="funds" />;
+    case 'teacher-classes':
+      return <TeacherApp currentUser={currentUser} defaultTab="classes" />;
+    case 'teacher-scheduling':
+      return <TeacherApp currentUser={currentUser} defaultTab="scheduling" />;
+    case 'teacher-games':
+      return <TeacherApp currentUser={currentUser} defaultTab="jointgames" />;
+    case 'teacher-forceapp':
+      return <TeacherApp currentUser={currentUser} defaultTab="forceapp" />;
+    case 'voting':
+      return currentUser ? (
+        <Voting currentUser={currentUser} />
+      ) : (
+        <div className="p-6 text-center">
+          <div className="text-lg text-gray-400">Please log in to vote</div>
+        </div>
+      );
+    case 'teacher-voting':
+      return <Voting currentUser={currentUser} isTeacher={true} />;
+    case 'teacher-homework':
+      return <TeacherHomework currentUser={currentUser} />;
     case 'users':
       return currentUser ? (
         <UsersApp currentUser={{ uid: currentUser.uid, email: currentUser.email || '' }} preSelectedSender={preSelectedSender} />

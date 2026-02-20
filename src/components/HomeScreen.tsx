@@ -2,11 +2,33 @@ import { App, APPS } from '../data/apps';
 
 interface HomeScreenProps {
   onOpenApp: (app: App) => void;
+  currentUser?: { role?: string };
 }
 
-export const HomeScreen = ({ onOpenApp }: HomeScreenProps) => {
-  const availableApps = APPS.filter(app => !app.comingSoon);
-  const comingSoonApps = APPS.filter(app => app.comingSoon);
+export const HomeScreen = ({ onOpenApp, currentUser }: HomeScreenProps) => {
+  // Filter apps based on user role
+  const isTeacher = currentUser?.role === 'teacher';
+  
+  const getVisibleApps = (apps: App[]) => {
+    if (isTeacher) {
+      // Teachers only see teacher-only apps (no 'student' role apps)
+      return apps.filter(app => app.role === 'teacher' && !app.comingSoon);
+    } else {
+      // Students see all apps except teacher-only apps
+      return apps.filter(app => app.role !== 'teacher' && !app.comingSoon);
+    }
+  };
+
+  const getComingSoonApps = (apps: App[]) => {
+    if (isTeacher) {
+      return apps.filter(app => app.role === 'teacher' && app.comingSoon);
+    } else {
+      return apps.filter(app => app.role !== 'teacher' && app.comingSoon);
+    }
+  };
+
+  const availableApps = getVisibleApps(APPS);
+  const comingSoonApps = getComingSoonApps(APPS);
 
   return (
     <div className="w-full h-full bg-black flex flex-col">
